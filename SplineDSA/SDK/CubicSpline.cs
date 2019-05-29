@@ -1,4 +1,5 @@
 ﻿using System;
+using static System.Single;
 
 namespace SplineDSA.SDK
 {
@@ -7,11 +8,11 @@ namespace SplineDSA.SDK
     {
         #region Fields
 
-        private float[] a;
-        private float[] b;
+        private float[] _a;
+        private float[] _b;
 
-        private float[] xOrig;
-        private float[] yOrig;
+        private float[] _xOrig;
+        private float[] _yOrig;
 
         #endregion
 
@@ -21,7 +22,7 @@ namespace SplineDSA.SDK
         {
         }
 
-        public CubicSpline(float[] x, float[] y, float startSlope = float.NaN, float endSlope = float.NaN, bool debug = false)
+        public CubicSpline(float[] x, float[] y, float startSlope = NaN, float endSlope = NaN, bool debug = false)
         {
             Fit(x, y, startSlope, endSlope, debug);
         }
@@ -32,19 +33,19 @@ namespace SplineDSA.SDK
 
         private void CheckAlreadyFitted()
         {
-            if (a == null) throw new Exception("Fit must be called before you can evaluate.");
+            if (_a == null) throw new Exception("Fit must be called before you can evaluate.");
         }
 
-        private int _lastIndex = 0;
+        private int _lastIndex;
 
         private int GetNextXIndex(float x)
         {
-            if (x < xOrig[_lastIndex])
+            if (x < _xOrig[_lastIndex])
             {
                 throw new ArgumentException("The X values to evaluate must be sorted.");
             }
 
-            while ((_lastIndex < xOrig.Length - 2) && (x > xOrig[_lastIndex + 1]))
+            while ((_lastIndex < _xOrig.Length - 2) && (x > _xOrig[_lastIndex + 1]))
             {
                 _lastIndex++;
             }
@@ -55,10 +56,10 @@ namespace SplineDSA.SDK
 
         private float EvalSpline(float x, int j, bool debug = false)
         {
-            float dx = xOrig[j + 1] - xOrig[j];
-            float t = (x - xOrig[j]) / dx;
-            float y = (1 - t) * yOrig[j] + t * yOrig[j + 1] + t * (1 - t) * (a[j] * (1 - t) + b[j] * t); // equation 9
-            if (debug) Console.WriteLine("xs = {0}, j = {1}, t = {2}", x, j, t);
+            float dx = _xOrig[j + 1] - _xOrig[j];
+            float t = (x - _xOrig[j]) / dx;
+            float y = (1 - t) * _yOrig[j] + t * _yOrig[j + 1] + t * (1 - t) * (_a[j] * (1 - t) + _b[j] * t);
+            if (debug) Console.WriteLine($"xs = {x}, j = {j}, t = {t}");
             return y;
         }
 
@@ -66,31 +67,29 @@ namespace SplineDSA.SDK
 
         #region Fit
 
-        public float[] FitAndEval(float[] x, float[] y, float[] xs, float startSlope = float.NaN, float endSlope = float.NaN, bool debug = false)
+        public float[] FitAndEval(float[] x, float[] y, float[] xs, float startSlope = NaN, float endSlope = NaN, bool debug = false)
         {
             Fit(x, y, startSlope, endSlope, debug);
             return Eval(xs, debug);
         }
 
-        public void Fit(float[] x, float[] y, float startSlope = float.NaN, float endSlope = float.NaN, bool debug = false)
+        public void Fit(float[] x, float[] y, float startSlope = NaN, float endSlope = NaN, bool debug = false)
         {
-            if (Single.IsInfinity(startSlope) || Single.IsInfinity(endSlope))
+            if (IsInfinity(startSlope) || IsInfinity(endSlope))
             {
                 throw new Exception("startSlope and endSlope cannot be infinity.");
             }
 
-            // Save x and y for eval
-            this.xOrig = x;
-            this.yOrig = y;
+            _xOrig = x;
+            _yOrig = y;
 
             int n = x.Length;
-            float[] r = new float[n]; // the right hand side numbers: wikipedia page overloads b
+            float[] r = new float[n];
 
             TriDiagonalMatrixF m = new TriDiagonalMatrixF(n);
             float dx1, dx2, dy1, dy2;
 
-            // First row is different (equation 16 from the article)
-            if (float.IsNaN(startSlope))
+            if (IsNaN(startSlope))
             {
                 dx1 = x[1] - x[0];
                 m.C[0] = 1.0f / dx1;
@@ -103,7 +102,6 @@ namespace SplineDSA.SDK
                 r[0] = startSlope;
             }
 
-            // Body rows (equation 15 from the article)
             for (int i = 1; i < n - 1; i++)
             {
                 dx1 = x[i] - x[i - 1];
@@ -118,8 +116,7 @@ namespace SplineDSA.SDK
                 r[i] = 3 * (dy1 / (dx1 * dx1) + dy2 / (dx2 * dx2));
             }
 
-            // Last row also different (equation 17 from the article)
-            if (float.IsNaN(endSlope))
+            if (IsNaN(endSlope))
             {
                 dx1 = x[n - 1] - x[n - 2];
                 dy1 = y[n - 1] - y[n - 2];
@@ -133,27 +130,25 @@ namespace SplineDSA.SDK
                 r[n - 1] = endSlope;
             }
 
-            if (debug) Console.WriteLine("Tri-diagonal matrix:\n{0}", m.ToDisplayString(":0.0000", "  "));
-            if (debug) Console.WriteLine("r: {0}", ArrayUtil.ToString<float>(r));
+            if (debug) Console.WriteLine($"Tri-diagonal matrix:\n{m.ToDisplayString(":0.0000", "  ")}");
+            if (debug) Console.WriteLine($"r: {ArrayUtil.ToString(r)}");
 
-            // k is the solution to the matrix
             float[] k = m.Solve(r);
-            if (debug) Console.WriteLine("k = {0}", ArrayUtil.ToString<float>(k));
+            if (debug) Console.WriteLine($"k = {ArrayUtil.ToString(k)}");
 
-            // a and b are each spline's coefficients
-            this.a = new float[n - 1];
-            this.b = new float[n - 1];
+            _a = new float[n - 1];
+            _b = new float[n - 1];
 
             for (int i = 1; i < n; i++)
             {
                 dx1 = x[i] - x[i - 1];
                 dy1 = y[i] - y[i - 1];
-                a[i - 1] = k[i - 1] * dx1 - dy1; // equation 10 from the article
-                b[i - 1] = -k[i] * dx1 + dy1; // equation 11 from the article
+                _a[i - 1] = k[i - 1] * dx1 - dy1;
+                _b[i - 1] = -k[i] * dx1 + dy1;
             }
 
-            if (debug) Console.WriteLine("a: {0}", ArrayUtil.ToString<float>(a));
-            if (debug) Console.WriteLine("b: {0}", ArrayUtil.ToString<float>(b));
+            if (debug) Console.WriteLine($"a: {ArrayUtil.ToString(_a)}");
+            if (debug) Console.WriteLine($"b: {ArrayUtil.ToString(_b)}");
         }
 
         #endregion
@@ -166,14 +161,12 @@ namespace SplineDSA.SDK
 
             int n = x.Length;
             float[] y = new float[n];
-            _lastIndex = 0; // Reset simultaneous traversal in case there are multiple calls
+            _lastIndex = 0; 
 
             for (int i = 0; i < n; i++)
             {
-                // Find which spline can be used to compute this x (by simultaneous traverse)
                 int j = GetNextXIndex(x[i]);
 
-                // Evaluate using j'th spline
                 y[i] = EvalSpline(x[i], j, debug);
             }
 
@@ -186,24 +179,21 @@ namespace SplineDSA.SDK
 
             int n = x.Length;
             float[] qPrime = new float[n];
-            _lastIndex = 0; // Reset simultaneous traversal in case there are multiple calls
+            _lastIndex = 0; 
 
             for (int i = 0; i < n; i++)
             {
-                // Find which spline can be used to compute this x (by simultaneous traverse)
                 int j = GetNextXIndex(x[i]);
 
-                // Evaluate using j'th spline
-                float dx = xOrig[j + 1] - xOrig[j];
-                float dy = yOrig[j + 1] - yOrig[j];
-                float t = (x[i] - xOrig[j]) / dx;
+                float dx = _xOrig[j + 1] - _xOrig[j];
+                float dy = _yOrig[j + 1] - _yOrig[j];
+                float t = (x[i] - _xOrig[j]) / dx;
 
-                // From equation 5 we could also compute q' (qp) which is the slope at this x
                 qPrime[i] = dy / dx
-                    + (1 - 2 * t) * (a[j] * (1 - t) + b[j] * t) / dx
-                    + t * (1 - t) * (b[j] - a[j]) / dx;
+                    + (1 - 2 * t) * (_a[j] * (1 - t) + _b[j] * t) / dx
+                    + t * (1 - t) * (_b[j] - _a[j]) / dx;
 
-                if (debug) Console.WriteLine("[{0}]: xs = {1}, j = {2}, t = {3}", i, x[i], j, t);
+                if (debug) Console.WriteLine($"[{i}]: xs = {x[i]}, j = {j}, t = {t}");
             }
 
             return qPrime;
@@ -214,7 +204,7 @@ namespace SplineDSA.SDK
         #region Static Methods
 
 
-        public static float[] Compute(float[] x, float[] y, float[] xs, float startSlope = float.NaN, float endSlope = float.NaN, bool debug = false)
+        public static float[] Compute(float[] x, float[] y, float[] xs, float startSlope = NaN, float endSlope = NaN, bool debug = false)
         {
             CubicSpline spline = new CubicSpline();
             return spline.FitAndEval(x, y, xs, startSlope, endSlope, debug);
@@ -222,11 +212,10 @@ namespace SplineDSA.SDK
 
 
         public static void FitParametric(float[] x, float[] y, int nOutputPoints, out float[] xs, out float[] ys,
-            float firstDx = Single.NaN, float firstDy = Single.NaN, float lastDx = Single.NaN, float lastDy = Single.NaN)
+            float firstDx = NaN, float firstDy = NaN, float lastDx = NaN, float lastDy = NaN)
         {
-            // Compute distances
             int n = x.Length;
-            float[] dists = new float[n]; // cumulative distance
+            float[] dists = new float[n];
             dists[0] = 0;
             float totalDist = 0;
 
@@ -239,7 +228,6 @@ namespace SplineDSA.SDK
                 dists[i] = totalDist;
             }
 
-            // Create 'times' to interpolate to
             float dt = totalDist / (nOutputPoints - 1);
             float[] times = new float[nOutputPoints];
             times[0] = 0;
@@ -249,11 +237,9 @@ namespace SplineDSA.SDK
                 times[i] = times[i - 1] + dt;
             }
 
-            // Normalize the slopes, if specified
             NormalizeVector(ref firstDx, ref firstDy);
             NormalizeVector(ref lastDx, ref lastDy);
 
-            // Spline fit both x and y to times
             CubicSpline xSpline = new CubicSpline();
             xs = xSpline.FitAndEval(dists, x, times, firstDx / dt, lastDx / dt);
 
@@ -263,11 +249,11 @@ namespace SplineDSA.SDK
 
         private static void NormalizeVector(ref float dx, ref float dy)
         {
-            if (!Single.IsNaN(dx) && !Single.IsNaN(dy))
+            if (!IsNaN(dx) && !IsNaN(dy))
             {
                 float d = (float)Math.Sqrt(dx * dx + dy * dy);
 
-                if (d > Single.Epsilon) // probably not conservative enough, but catches the (0,0) case at least
+                if (d > Epsilon)
                 {
                     dx = dx / d;
                     dy = dy / d;
@@ -279,8 +265,7 @@ namespace SplineDSA.SDK
             }
             else
             {
-                // In case one is NaN and not the other
-                dx = dy = Single.NaN;
+                dx = dy = NaN;
             }
         }
 

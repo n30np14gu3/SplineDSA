@@ -49,6 +49,9 @@
             this.MainImage.TabIndex = 0;
             this.MainImage.TabStop = false;
             this.MainImage.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MainImage_MouseClick);
+            this.MainImage.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MainImage_MouseDown);
+            this.MainImage.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainImage_MouseMove);
+            this.MainImage.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MainImage_MouseUp);
             // 
             // menuStrip1
             // 
@@ -73,20 +76,20 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openToolStripMenuItem.Text = "Open";
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.openToolStripMenuItem.Text = "New";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // drawSplineToolStripMenuItem
             // 
             this.drawSplineToolStripMenuItem.Name = "drawSplineToolStripMenuItem";
-            this.drawSplineToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.drawSplineToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
             this.drawSplineToolStripMenuItem.Text = "Draw spline";
             this.drawSplineToolStripMenuItem.Click += new System.EventHandler(this.drawSplineToolStripMenuItem_Click);
             // 
