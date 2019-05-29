@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using SplineDSA.SDK;
@@ -108,6 +109,14 @@ namespace SplineDSA
                     MainImage.Invalidate();
                 }
             }
+        }
+
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(MainImage.Image == null)
+                return;
+
+            MainImage.Image.Save("spline.bmp", ImageFormat.Bmp);
         }
     }
 }

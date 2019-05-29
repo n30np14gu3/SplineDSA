@@ -76,20 +76,21 @@
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openToolStripMenuItem.Text = "New";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveToolStripMenuItem.Text = "Save";
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // drawSplineToolStripMenuItem
             // 
             this.drawSplineToolStripMenuItem.Name = "drawSplineToolStripMenuItem";
-            this.drawSplineToolStripMenuItem.Size = new System.Drawing.Size(135, 22);
+            this.drawSplineToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.drawSplineToolStripMenuItem.Text = "Draw spline";
             this.drawSplineToolStripMenuItem.Click += new System.EventHandler(this.drawSplineToolStripMenuItem_Click);
             // 
